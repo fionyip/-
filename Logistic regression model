@@ -1,0 +1,47 @@
+m(list=ls(all=TRUE))#首先删除工作空间中所有对象
+library(stats)
+library(caret)
+training<-read.csv("C:\\Users\\samsung pc\\Desktop\\for r\\training3.csv",header=TRUE)
+testing<-read.csv("C:\\Users\\samsung pc\\Desktop\\for r\\testing5.csv",header=TRUE )
+
+glm.fit1<-glm(fa~x1+x3+x4+x5+x6+x8+x9+n+t+s+f+v+a+b+z+m+q+d+p+c+u+y+o+h+k+nx+w-1,data=training,family=binomial(link="logit"),control=list(maxit=100))
+fa~x1+x5+x6+x8+x9+n+v+a+d+p+u+y+w-1
+##在没有使用逐步回归的情况下删除下式
+glm.fit<-step(glm.fit1)
+n<-nrow(training)#训练数据的行数,即样本数量
+R2<-1-exp((glm.fit$deviance-glm.fit$null.deviance)/n)#计算Cox-Snell拟合优度
+cat("Cox-Snell R2=",R2,"\n")
+
+R2<-R2/(1-exp((-glm.fit$null.deviance)/n))#计算Nagelkerke拟合优度 
+p=predict(glm.fit,testing)#用模型对测试数据进行预测
+p=exp(p)/(1+exp(p))#计算因变量的值
+
+testing$fa_predicted=1*(p>0.5)#给test数据增加一列,当p>0.5时，预测值为1  
+true_value=testing$fa>0
+predict_value=testing$fa_predicted
+
+retrieved=sum(predict_value)
+precision=sum(true_value & predict_value)/retrieved
+recall=sum(predict_value & true_value)/sum(true_value)
+F_measure=2*precision*recall/(precision+recall)#计算Recall，Precision和F-measure
+
+summary(glm.fit)
+cat("Nagelkerke R2=",R2,"\n")
+print(precision)
+print(recall)
+print(F_measure)
+
+tstep<-step(glm.fit)
+summary(tstep)
+
+###AUC计算及ROC绘图
+library(pROC)
+reg<-glm.fit
+summary(reg)
+p2<-predict(reg,testing)
+
+pre2<-predict(glm.fit,testing)
+modelroc <- roc(testing$fa,pre2)
+plot(modelroc, print.auc=TRUE, auc.polygon=TRUE, grid=c(0.1, 0.2),
+     grid.col=c("green", "red"), max.auc.polygon=TRUE,
+     auc.polygon.col="skyblue", print.thres=TRUE)
