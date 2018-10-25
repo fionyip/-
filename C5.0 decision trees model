@@ -1,0 +1,31 @@
+rm(list=ls(all=TRUE))
+credit <- read.csv("C:\\Users\\samsung pc\\Desktop\\for r\\training3.csv",header=TRUE
+, stringsAsFactors = TRUE)
+training<-read.csv("C:\\Users\\samsung pc\\Desktop\\for r\\training3.csv",header=TRUE,stringsAsFactors = TRUE)
+testing<-read.csv("C:\\Users\\samsung pc\\Desktop\\for r\\testing5.csv",header=TRUE,stringsAsFactors = TRUE )
+set.seed(12345)
+credit_rand <- credit[order(runif(1000)), ]
+# 分割数据集
+credit_train <- training
+credit_test <- testing
+
+library(C50)
+tc<-C5.0Control(winnow=T,CF=0.25,minCases =20)
+credit_train$fa<-as.factor(credit_train$fa)
+credit_model<-C5.0(fa~x5+a+v+u+x6+w+n+x9+d+y+x1+x3+t+m+x8-1,data=credit_train,rules=F,control=tc)
+credit_model
+summary(credit_model)
+credit_pred <- predict(credit_model, credit_test)
+
+library(gmodels)
+CrossTable(credit_test$fa, credit_pred,
+prop.chisq = FALSE, prop.c = FALSE, prop.r = FALSE,
+dnn = c('actual default', 'predicted default'))
+
+library(rpart)
+library(rattle)
+library(rpart.plot)
+library(RColorBrewer)
+#绘出建立训练数据的决策树
+model <- rpart(fa~x5+a+v+u+x6+w+n+x9+d+y+x1+x3+t+m+x8-1, data =training,  method="class")
+fancyRpartPlot(model)
